@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraDrone | Autonomous Network</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space+Grotesk', sans-serif; background: #050505; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-glow { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+    </style>
+</head>
+<body class="p-6">
+
+    <nav class="flex justify-between items-center mb-10">
+        <div class="flex items-center gap-2">
+            <i data-lucide="cpu" class="text-cyan-400"></i>
+            <h1 class="text-2xl font-bold tracking-tighter">AURADRONE <span class="text-xs font-light text-cyan-500">v2.0.6</span></h1>
+        </div>
+        <div class="flex gap-6 text-sm uppercase tracking-widest text-gray-400">
+            <span class="hover:text-cyan-400 cursor-pointer">Fleet</span>
+            <span class="hover:text-cyan-400 cursor-pointer">Logistics</span>
+            <span class="hover:text-cyan-400 cursor-pointer">Security</span>
+        </div>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-1 space-y-6">
+            <div class="glass p-6 rounded-2xl">
+                <h2 class="text-cyan-400 mb-4 flex items-center gap-2 italic">
+                    <i data-lucide="terminal" size="18"></i> Neuro-Symbolic Command
+                </h2>
+                <input id="topicInput" type="text" placeholder="Enter Service (e.g. Medical, Food)" 
+                    class="w-full bg-black border border-gray-800 p-3 rounded-lg focus:outline-none focus:border-cyan-500 mb-4">
+                <button onclick="askAI()" class="w-full bg-cyan-600 hover:bg-cyan-400 text-black font-bold p-3 rounded-lg transition-all uppercase text-sm tracking-tighter">
+                    Initialize Deployment
+                </button>
+            </div>
+
+            <div class="glass p-6 rounded-2xl">
+                <h3 class="text-gray-500 text-xs uppercase mb-4">Live AI Synthesis</h3>
+                <div id="aiResponse" class="text-sm leading-relaxed text-gray-300">
+                    Waiting for tactical input...
+                </div>
+                <div id="aiSlogan" class="mt-4 text-cyan-500 font-bold italic text-lg"></div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 glass rounded-2xl relative overflow-hidden p-6 min-h-[400px]">
+            <div class="flex justify-between items-start">
+                <h2 class="text-xl font-medium uppercase">Active Delivery Grid</h2>
+                <div class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs animate-pulse">Network Online</div>
+            </div>
+            
+            <div class="absolute inset-0 opacity-20 pointer-events-none" 
+                 style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 30px 30px;">
+            </div>
+
+            <div class="mt-20 flex flex-col items-center justify-center text-center">
+                <i data-lucide="navigation" class="text-cyan-500 mb-4 animate-bounce" size="48"></i>
+                <p class="text-gray-500">Autonomous pathfinding active.<br>Tracking 142 drones in sector 7-G.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass p-4 rounded-xl text-center">
+            <p class="text-gray-500 text-[10px] uppercase">Battery Avg</p>
+            <p class="text-2xl font-bold">89%</p>
+        </div>
+        <div class="glass p-4 rounded-xl text-center">
+            <p class="text-gray-500 text-[10px] uppercase">Active Loads</p>
+            <p class="text-2xl font-bold">1,024</p>
+        </div>
+        <div class="glass p-4 rounded-xl text-center">
+            <p class="text-gray-500 text-[10px] uppercase">Wind Speed</p>
+            <p class="text-2xl font-bold">12km/h</p>
+        </div>
+        <div class="glass p-4 rounded-xl text-center border-cyan-900">
+            <p class="text-gray-500 text-[10px] uppercase">Safety Score</p>
+            <p class="text-2xl font-bold text-cyan-400">99.9</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        async function askAI() {
+            const topic = document.getElementById('topicInput').value;
+            const resBox = document.getElementById('aiResponse');
+            const sloganBox = document.getElementById('aiSlogan');
+
+            if(!topic) return alert("Please specify a service category.");
+
+            resBox.innerHTML = "Synthesizing trajectory...";
+            sloganBox.innerText = "";
+
+            try {
+                // Connect to your Flask Backend
+                const response = await fetch('http://localhost:5000/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic })
+                });
+
+                const data = await response.json();
+                
+                resBox.innerText = data.paragraph;
+                sloganBox.innerText = data.slogan;
+            } catch (error) {
+                resBox.innerText = "Error: Ensure your Flask AI server is running on port 5000.";
+            }
+        }
+    </script>
+</body>
+</html>
