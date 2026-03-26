@@ -3,203 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyDrop | AI Command Center</title>
+    <title>SkyDrop | Modern AI Delivery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space+Grotesk', sans-serif; background-color: #020617; color: #f8fafc; overflow: hidden; }
-        .neon-border { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border: 1px solid rgba(59, 130, 246, 0.5); }
-        .scanning { background: linear-gradient(to bottom, transparent 50%, rgba(59, 130, 246, 0.1) 50%); background-size: 100% 4px; }
-        .power-btn-glow { box-shadow: 0 0 30px #ef4444; }
-        .power-on { box-shadow: 0 0 30px #22c55e; border-color: #22c55e; }
-        @keyframes takeoff {
-            0% { transform: translateY(0) scale(1); filter: brightness(1); }
-            50% { transform: translateY(-20px) scale(1.05); filter: brightness(1.2); }
-            100% { transform: translateY(-500px) scale(0.5); opacity: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f0f9ff; color: #1e293b; overflow-x: hidden; }
+        
+        /* Light Theme Glassmorphism */
+        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05); }
+
+        /* Drone Propeller Animation */
+        .rotor { width: 50px; height: 6px; background: #334155; border-radius: 10px; position: absolute; animation: spin 0.1s linear infinite; animation-play-state: paused; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* Flight States */
+        .hover-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        
+        .takeoff-anim { animation: flyUp 3s forwards cubic-bezier(.47,0,.74,.71); }
+        @keyframes flyUp { 
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            30% { transform: translateY(-30px) scale(1.1); }
+            100% { transform: translateY(-800px) scale(0.2); opacity: 0; }
         }
-        .animate-takeoff { animation: takeoff 2.5s forwards ease-in; }
+
+        .status-pill { transition: all 0.3s ease; }
+        .active-pulse { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
     </style>
 </head>
-<body class="scanning">
+<body>
 
-    <div id="power-overlay" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center transition-all duration-1000">
-        <div class="text-center space-y-8">
-            <h2 class="text-3xl font-bold tracking-[0.2em] text-slate-500">SYSTEM OFFLINE</h2>
-            <button onclick="powerOn()" id="main-power-btn" class="w-32 h-32 rounded-full border-4 border-red-500 flex items-center justify-center group transition-all duration-500 hover:power-btn-glow">
-                <i class="fas fa-power-off text-4xl text-red-500 group-hover:scale-110 transition"></i>
+    <div id="startup-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center transition-all duration-700">
+        <div class="text-center">
+            <div class="mb-6 inline-block p-5 bg-blue-100 rounded-full">
+                <i class="fas fa-paper-plane text-4xl text-blue-600"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-2">SkyDrop AI</h2>
+            <p class="text-slate-500 mb-8">Ready to synchronize with drone fleet</p>
+            <button onclick="bootSystem()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-blue-200 transition-all active:scale-95">
+                Initialize Fleet
             </button>
-            <p class="text-slate-600 animate-pulse">Press to initialize 100+ Drone Fleet</p>
         </div>
     </div>
 
-    <main class="h-screen flex flex-col p-6 space-y-6">
-        <div class="flex justify-between items-center bg-slate-900/50 p-4 rounded-2xl neon-border">
-            <div class="flex items-center gap-4">
-                <div class="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
-                <h1 class="text-xl font-bold tracking-tighter uppercase">SkyDrop <span class="text-blue-500">Global Fleet</span></h1>
+    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">
+                <i class="fas fa-box-open text-white text-xl"></i>
             </div>
-            <div id="telemetry" class="flex gap-6 text-xs font-mono text-slate-400">
-                <span>LAT: <b id="disp-lat">0.00</b></span>
-                <span>LNG: <b id="disp-lng">0.00</b></span>
-                <span>HUB: <b class="text-blue-400">ALPHA-BASE-1</b></span>
+            <span class="text-2xl font-800 tracking-tight text-slate-800">SkyDrop</span>
+        </div>
+        <div class="flex gap-4 items-center">
+            <div id="weather-pill" class="bg-white px-4 py-2 rounded-full border border-slate-100 flex items-center gap-3 shadow-sm">
+                <i class="fas fa-cloud-sun text-yellow-500"></i>
+                <span id="wind-text" class="text-sm font-semibold text-slate-600">Checking Sky...</span>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Admin&background=0284c7&color=fff" class="w-10 h-10 rounded-full border-2 border-white shadow-md">
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 grid lg:grid-cols-12 gap-6 h-[calc(100vh-140px)]">
+        
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass-panel p-6 rounded-[2.5rem] h-full flex flex-col">
+                <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-layer-group text-blue-500"></i>
+                    Delivery Type
+                </h3>
+                
+                <div class="space-y-4 flex-1">
+                    <div onclick="prepLaunch('Medical Gear', 'fa-kit-medical', 'red')" class="p-4 rounded-2xl border-2 border-transparent bg-slate-50 hover:border-red-400 cursor-pointer transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 group-hover:scale-110 transition">
+                                <i class="fas fa-kit-medical text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800">Medical</p>
+                                <p class="text-xs text-slate-500">Emergency Kit</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="prepLaunch('Hot Meal', 'fa-burger', 'orange')" class="p-4 rounded-2xl border-2 border-transparent bg-slate-50 hover:border-orange-400 cursor-pointer transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 group-hover:scale-110 transition">
+                                <i class="fas fa-burger text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800">Food</p>
+                                <p class="text-xs text-slate-500">Restaraunt Order</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="prepLaunch('Electronics', 'fa-microchip', 'blue')" class="p-4 rounded-2xl border-2 border-transparent bg-slate-50 hover:border-blue-400 cursor-pointer transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition">
+                                <i class="fas fa-microchip text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800">Tech</p>
+                                <p class="text-xs text-slate-500">Priority Parts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 rounded-2xl">
+                    <p class="text-[10px] uppercase font-bold text-blue-400 mb-1">Target GPS</p>
+                    <p id="gps-display" class="text-sm font-bold text-slate-700 tracking-tight">Detecting Location...</p>
+                </div>
             </div>
         </div>
 
-        <div class="flex-1 grid lg:grid-cols-4 gap-6 overflow-hidden">
-            <div class="space-y-4">
-                <div class="bg-slate-900/80 p-6 rounded-3xl neon-border h-full">
-                    <h3 class="text-sm font-bold text-blue-400 uppercase mb-6 tracking-widest">Select Payload</h3>
-                    <div class="space-y-3">
-                        <button onclick="setPayload('Emergency Med-Kit', 'fa-suitcase-medical')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-blue-600 transition flex items-center gap-4 group">
-                            <i class="fas fa-suitcase-medical text-xl group-hover:rotate-12 transition"></i>
-                            <span class="font-bold">Medical Kit</span>
-                        </button>
-                        <button onclick="setPayload('Food Supply', 'fa-burger')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-orange-600 transition flex items-center gap-4 group">
-                            <i class="fas fa-burger text-xl group-hover:rotate-12 transition"></i>
-                            <span class="font-bold">Hot Food</span>
-                        </button>
-                        <button onclick="setPayload('Critical Hardware', 'fa-microchip')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-purple-600 transition flex items-center gap-4 group">
-                            <i class="fas fa-microchip text-xl group-hover:rotate-12 transition"></i>
-                            <span class="font-bold">Tech Parts</span>
-                        </button>
-                    </div>
+        <div class="lg:col-span-6 relative">
+            <div class="glass-panel rounded-[3rem] h-full w-full overflow-hidden flex flex-col items-center justify-center relative">
+                
+                <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#3b82f6 1px, transparent 1px); background-size: 30px 30px;"></div>
+                
+                <div id="drone-unit" class="relative z-10 flex flex-col items-center hover-float">
+                    <img id="drone-img" src="https://pngimg.com/d/drone_PNG204.png" class="w-72 drop-shadow-2xl transition-all duration-500" alt="Drone View">
                     
-                    <div class="mt-8 p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                        <p class="text-[10px] text-blue-400 font-bold uppercase mb-2">Target Destination</p>
-                        <p id="target-name" class="font-bold text-lg">Awaiting Selection...</p>
-                        <div class="mt-4 py-2 border-t border-blue-500/20 text-[10px] font-mono">
-                            Auto-GPS: <span class="text-green-400">CONNECTED</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2 relative">
-                <div id="drone-hangar" class="absolute inset-0 flex items-center justify-center bg-slate-900/50 rounded-3xl border border-white/10 overflow-hidden">
-                    <div class="text-center z-10">
-                        <img id="drone-img" src="https://pngimg.com/d/drone_PNG204.png" class="w-80 drop-shadow-[0_20px_50px_rgba(59,130,246,0.5)] transition-all duration-1000" alt="Drone">
-                        <div id="takeoff-smoke" class="hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-32 bg-gradient-to-t from-blue-500/20 to-transparent"></div>
-                    </div>
-                    <div class="absolute top-4 right-4 flex flex-col gap-2">
-                        <div class="bg-black/60 backdrop-blur p-3 rounded-lg border border-white/10">
-                            <span class="block text-[8px] text-slate-500">ENGINE TEMP</span>
-                            <span class="text-xs font-mono">42°C</span>
-                        </div>
-                        <div class="bg-black/60 backdrop-blur p-3 rounded-lg border border-white/10">
-                            <span class="block text-[8px] text-slate-500">SIGNAL</span>
-                            <span class="text-xs font-mono text-green-400">99%</span>
-                        </div>
+                    <div class="absolute inset-0 flex flex-wrap justify-between p-4 pointer-events-none">
+                        <div class="rotor" style="top: 15%; left: 15%;"></div>
+                        <div class="rotor" style="top: 15%; right: 15%;"></div>
+                        <div class="rotor" style="bottom: 15%; left: 15%;"></div>
+                        <div class="rotor" style="bottom: 15%; right: 15%;"></div>
                     </div>
                 </div>
 
-                <div id="sim-data" class="hidden absolute top-4 left-4 z-20 space-y-2">
-                    <div class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-sm animate-pulse">DRONE AIRBORNE</div>
-                    <div class="bg-black/80 p-4 rounded-xl border border-blue-500/30 text-xs font-mono space-y-1">
-                        <p>DIST: <span id="res-dist">--</span> km</p>
-                        <p>ETA: <span id="res-eta">--</span> min</p>
-                        <p>PATH: OPTIMIZED</p>
+                <div class="absolute bottom-8 left-8 right-8 flex gap-4">
+                    <div class="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Altitude</p>
+                        <p id="alt-meter" class="text-2xl font-bold text-slate-800">0<span class="text-sm text-slate-400 ml-1">m</span></p>
+                    </div>
+                    <div class="flex-1 bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">AI Battery</p>
+                        <p class="text-2xl font-bold text-green-500">100<span class="text-sm text-slate-400 ml-1">%</span></p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-slate-950 p-6 rounded-3xl border border-white/5 font-mono text-[11px] overflow-hidden flex flex-col">
-                <h3 class="text-slate-500 mb-4 flex justify-between">
-                    <span>SYSTEM_LOG</span>
-                    <span id="clock">00:00:00</span>
-                </h3>
-                <div id="console" class="flex-1 overflow-y-auto space-y-2 text-blue-300">
-                    <div>> Initializing SkyDrop OS...</div>
+        <div class="lg:col-span-3 space-y-4 flex flex-col">
+            <div class="glass-panel p-6 rounded-[2.5rem] flex-1 overflow-hidden flex flex-col">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Mission Logs</h3>
+                <div id="log-box" class="flex-1 overflow-y-auto space-y-3 pr-2 text-xs font-medium text-slate-600">
+                    <div class="p-2 border-l-2 border-blue-400 bg-blue-50 rounded-r-lg">System initialized. Awaiting input.</div>
                 </div>
-                <button onclick="launchDrone()" id="launch-btn" class="mt-6 w-full py-5 bg-red-600 hover:bg-red-500 rounded-2xl font-bold text-lg shadow-xl shadow-red-900/40 transition-all disabled:opacity-50">
-                    INITIALIZE TAKEOFF
-                </button>
             </div>
+
+            <button id="btn-launch" disabled onclick="startDroneMission()" class="w-full py-6 rounded-[2rem] bg-slate-200 text-slate-500 font-extrabold text-xl shadow-lg transition-all cursor-not-allowed">
+                SYSTEM LOCKED
+            </button>
         </div>
     </main>
 
     <script>
-        const AI_BACKEND_URL = "YOUR_NGROK_URL_HERE"; // PASTE YOUR URL HERE
-        let userLat, userLng;
+        let weatherOk = false;
+        let uLat, uLng;
 
-        function powerOn() {
-            const btn = document.getElementById('main-power-btn');
-            btn.classList.replace('border-red-500', 'power-on');
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin text-green-500 text-4xl"></i>';
-            
+        function bootSystem() {
+            document.getElementById('startup-screen').style.opacity = '0';
             setTimeout(() => {
-                document.getElementById('power-overlay').classList.add('opacity-0', 'scale-110', 'pointer-events-none');
-                logConsole("Fleet synchronized. 124 drones on standby.");
+                document.getElementById('startup-screen').style.display = 'none';
+                fetchWeather();
                 getGPS();
-            }, 1200);
+            }, 700);
         }
 
         function getGPS() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                userLat = pos.coords.latitude;
-                userLng = pos.coords.longitude;
-                document.getElementById('disp-lat').innerText = userLat.toFixed(4);
-                document.getElementById('disp-lng').innerText = userLng.toFixed(4);
-                logConsole(`GPS Locked: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+            navigator.geolocation.getCurrentPosition(p => {
+                uLat = p.coords.latitude;
+                uLng = p.coords.longitude;
+                document.getElementById('gps-display').innerText = `${uLat.toFixed(4)}, ${uLng.toFixed(4)}`;
+                addLog(`GPS lock established via AI satellite.`);
             });
         }
 
-        function setPayload(name, icon) {
-            document.getElementById('target-name').innerText = name;
-            logConsole(`Payload set: ${name}`);
-        }
-
-        async function launchDrone() {
-            if (!userLat) return alert("Waiting for GPS lock...");
-            
-            const btn = document.getElementById('launch-btn');
-            btn.disabled = true;
-            btn.innerText = "PROCESSING AI PATH...";
-            logConsole("Requesting AI route from Google Colab...");
-
+        async function fetchWeather() {
             try {
-                const response = await fetch(`${AI_BACKEND_URL}/simulate-drone`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        pickup: { lat: userLat + 0.05, lng: userLng + 0.05 }, // Simulated Hub
-                        drop: { lat: userLat, lng: userLng }
-                    })
-                });
-                const data = await response.json();
-
-                // Trigger Takeoff Animation
-                logConsole("AI path received. Engaging rotors.");
-                document.getElementById('drone-img').classList.add('animate-takeoff');
-                document.getElementById('takeoff-smoke').classList.remove('hidden');
-
-                setTimeout(() => {
-                    document.getElementById('sim-data').classList.remove('hidden');
-                    document.getElementById('res-dist').innerText = data.distance_km;
-                    document.getElementById('res-eta').innerText = data.estimated_time_min;
-                    logConsole(`En Route: ${data.distance_km}km in ${data.estimated_time_min}mins`);
-                    btn.innerText = "MISSION ACTIVE";
-                    btn.className = "mt-6 w-full py-5 bg-green-600 rounded-2xl font-bold text-lg";
-                }, 1000);
-
-            } catch (err) {
-                logConsole("ERROR: Could not connect to AI Backend.");
-                btn.disabled = false;
-                btn.innerText = "RETRY LAUNCH";
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.77&longitude=-122.41&current_weather=true');
+                const data = await res.json();
+                const wind = data.current_weather.windspeed;
+                document.getElementById('wind-text').innerText = `Wind: ${wind} km/h`;
+                
+                if(wind < 35) {
+                    weatherOk = true;
+                    addLog(`Weather check: Clear for takeoff (${wind}km/h).`);
+                } else {
+                    addLog(`Alert: High winds detected. Safety lock active.`);
+                }
+            } catch(e) {
+                weatherOk = true; // Fallback
             }
         }
 
-        function logConsole(msg) {
-            const con = document.getElementById('console');
-            const div = document.createElement('div');
-            div.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> > ${msg}`;
-            con.appendChild(div);
-            con.scrollTop = con.scrollHeight;
+        function prepLaunch(type, icon, color) {
+            addLog(`Payload Assigned: ${type}`);
+            const btn = document.getElementById('btn-launch');
+            if(weatherOk) {
+                btn.disabled = false;
+                btn.innerText = "START DELIVERY";
+                btn.classList.replace('bg-slate-200', 'bg-blue-600');
+                btn.classList.replace('text-slate-500', 'text-white');
+                btn.classList.replace('cursor-not-allowed', 'active-pulse');
+            }
         }
 
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
+        function startDroneMission() {
+            addLog("AI calculating optimized flight path...");
+            document.getElementById('btn-launch').innerText = "FLYING...";
+            document.getElementById('btn-launch').disabled = true;
+
+            // Start Propellers
+            document.querySelectorAll('.rotor').forEach(r => r.style.animationPlayState = 'running');
+
+            // Simulate Altitude Change
+            let alt = 0;
+            const altTimer = setInterval(() => {
+                alt += 5;
+                document.getElementById('alt-meter').innerHTML = `${alt}<span class="text-sm text-slate-400 ml-1">m</span>`;
+                if(alt >= 120) {
+                    clearInterval(altTimer);
+                    addLog("Altitude reached. Engaging AI cruise mode.");
+                    
+                    // Trigger Departure Animation
+                    setTimeout(() => {
+                        document.getElementById('drone-unit').classList.remove('hover-float');
+                        document.getElementById('drone-unit').classList.add('takeoff-anim');
+                        addLog("Drone en-route to customer.");
+                    }, 1000);
+                }
+            }, 50);
+        }
+
+        function addLog(msg) {
+            const lb = document.getElementById('log-box');
+            const d = document.createElement('div');
+            d.className = "p-3 bg-white border border-slate-100 rounded-xl mb-2 shadow-sm animate-fade-in";
+            d.innerHTML = `<span class="text-blue-500 font-bold mr-2">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span> ${msg}`;
+            lb.prepend(d);
+        }
     </script>
 </body>
 </html>
