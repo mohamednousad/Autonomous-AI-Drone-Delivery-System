@@ -28,7 +28,7 @@
             <div class="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
             <i class="fas fa-drone absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-blue-400 animate-pulse"></i>
         </div>
-        <h2 class="mt-6 text-xl font-bold tracking-widest animate-pulse">INITIALIZING AI UPLINK...</h2>
+        <h2 class="mt-6 text-xl font-bold tracking-widest animate-pulse">Loading...</h2>
     </div>
 
     <nav class="fixed top-0 w-full z-50 glass px-6 py-4 flex justify-between items-center">
@@ -36,7 +36,7 @@
             <div class="bg-blue-600 p-2 rounded-xl neon-border">
                 <i class="fas fa-box-rocket text-xl"></i>
             </div>
-            <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">DroneSwift</span>
+            <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">SkyDrop</span>
         </div>
         <div class="hidden md:flex gap-8 font-medium">
             <a href="#home" class="hover:text-blue-400 transition">Fleet</a>
@@ -146,7 +146,7 @@
                         </div>
                     </div>
                     <button onclick="startMission()" id="missionBtn" class="hidden w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl font-bold mt-6 shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition">
-                        CONFIRM & LAUNCH DRONE
+                        Confirm Order
                     </button>
                 </div>
             </div>
@@ -154,7 +154,7 @@
     </section>
 
     <footer class="py-10 border-t border-white/10 text-center text-slate-500 text-sm">
-        <p>© 2026 DroneSwift Autonomous Systems. Simulation Mode Active.</p>
+        <p>© 2026 SkyDrop Autonomous Systems. Simulation Mode Active.</p>
     </footer>
 
     <script>
@@ -200,7 +200,7 @@
             if(missionStarted) return;
             missionStarted = true;
             
-            document.getElementById('missionBtn').innerHTML = '<i class="fas fa-spinner animate-spin"></i> CALCULATING AI ROUTE...';
+            document.getElementById('missionBtn').innerHTML = '<i class="fas fa-spinner animate-spin"></i> Process...';
             
             const startPoint = [40.7128, -74.0060];
             const endPoint = [40.7200, -73.9950];
