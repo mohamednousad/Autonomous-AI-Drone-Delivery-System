@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Text Generator</title>
+</head>
+<body>
+  <h2>AI Text Generator</h2>
+  <input id="seed" placeholder="Start character">
+  <input id="length" type="number" placeholder="Length">
+  <button onclick="generate()">Generate Text</button>
+  <p id="output"></p>
+
+  <script>
+    const apiUrl = "https://unstatic-nonpendently-lola.ngrok-free.dev/generate"; // replace with your ngrok URL
+
+    async function generate(){
+      const seed = document.getElementById("seed").value;
+      const length = parseInt(document.getElementById("length").value);
+      const res = await fetch(apiUrl,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({input: seed, length: length})
+      });
+      const data = await res.json();
+      document.getElementById("output").innerText = data.output;
+    }
+  </script>
+</body>
+</html>
