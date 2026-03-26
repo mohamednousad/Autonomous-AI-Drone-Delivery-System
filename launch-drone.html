@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkyDrop | Launch Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #1E293B; overflow: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        #map { height: 100%; width: 100%; z-index: 1; border-radius: 2rem; }
+        .card-active { border: 2px solid #3B82F6; background: #EFF6FF; }
+        .drone-pulse { width: 20px; height: 20px; background: #3B82F6; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); animation: pulse-ring 1.5s infinite; }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { transform: scale(0.8); } }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <nav class="p-4 lg:p-6 flex justify-between items-center bg-white/50 backdrop-blur-md z-50 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-2 rounded-xl text-white cursor-pointer" onclick="window.location.href='index.html'">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <h1 class="text-xl font-800 tracking-tight text-slate-800">Mission: <span id="drone-id-display" class="text-blue-600">----</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-slate-100 px-3 py-1.5 rounded-full text-xs font-semibold">
+                <i class="fas fa-satellite text-blue-500 mr-2"></i>Status: <span class="text-green-600">Linked</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 p-4 lg:p-6 grid lg:grid-cols-12 gap-6 overflow-hidden">
+        <div class="lg:col-span-3 space-y-4 flex flex-col h-full overflow-y-auto">
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold mb-4">Payload Selection</h2>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="selectService('Food')" id="btn-Food" class="service-card flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border-2 border-transparent transition-all text-left">
+                        <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center"><i class="fas fa-burger"></i></div>
+                        <div><p class="font-bold text-sm">Food Delivery</p></div>
+                    </button>
+                    <button onclick="selectService('Medical')" id="btn-Medical" class="service-card flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border-2 border-transparent transition-all text-left">
+                        <div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center"><i class="fas fa-kit-medical"></i></div>
+                        <div><p class="font-bold text-sm">Medical Emergency</p></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex-1 flex flex-col">
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Telemetry Log</h3>
+                <div id="log-container" class="space-y-3 overflow-y-auto text-[11px]"></div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-6 relative">
+            <div class="bg-white p-2 rounded-[2.5rem] shadow-xl border h-full relative overflow-hidden">
+                <div id="map"></div>
+                <div class="absolute bottom-6 left-6 right-6 z-[10] grid grid-cols-3 gap-3">
+                    <div class="glass p-3 rounded-2xl text-center"><p class="text-[9px] font-bold text-slate-400">ALT</p><p id="hud-alt" class="text-lg font-extrabold text-blue-600">0m</p></div>
+                    <div class="glass p-3 rounded-2xl text-center"><p class="text-[9px] font-bold text-slate-400">SPD</p><p id="hud-spd" class="text-lg font-extrabold">0</p></div>
+                    <div class="glass p-3 rounded-2xl text-center"><p class="text-[9px] font-bold text-slate-400">BAT</p><p id="hud-bat" class="text-lg font-extrabold text-green-500">--%</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border h-full flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Unit Specs</h3>
+                    <div id="specs-container" class="space-y-4 text-sm">
+                        </div>
+                </div>
+                <button id="launch-btn" disabled onclick="initiateTakeoff()" class="w-full py-5 bg-slate-200 text-slate-400 rounded-2xl font-bold text-lg transition-all cursor-not-allowed">Confirm Launch</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const droneId = urlParams.get('id') || 'UNKNOWN-UNIT';
+        
+        const droneSpecs = {
+            'SKYD-COL-01': { model: 'Vulture-X', bat: 98, load: 'Heavy' },
+            'SKYD-COL-02': { model: 'Swift-S', bat: 85, load: 'Light' },
+            'DEFAULT': { model: 'Standard-v4', bat: 92, load: 'Medium' }
+        };
+
+        let map, droneMarker, isFlying = false;
+
+        window.onload = () => {
+            document.getElementById('drone-id-display').innerText = droneId;
+            const spec = droneSpecs[droneId] || droneSpecs['DEFAULT'];
+            document.getElementById('hud-bat').innerText = spec.bat + '%';
+            document.getElementById('specs-container').innerHTML = `
+                <div class="flex justify-between"><span>Model:</span><b>${spec.model}</b></div>
+                <div class="flex justify-between"><span>Payload:</span><b>${spec.load}</b></div>
+                <div class="flex justify-between"><span>Signal:</span><b class="text-green-500">98%</b></div>
+            `;
+
+            map = L.map('map', { zoomControl: false }).setView([6.9271, 79.8612], 14);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+            addLog("System Ready. Waiting for payload confirmation.");
+        };
+
+        function addLog(msg) {
+            const entry = document.createElement('div');
+            entry.className = "p-2 bg-slate-50 rounded-lg mb-2";
+            entry.innerHTML = `<span class="text-blue-500 font-bold">${new Date().toLocaleTimeString()}</span> - ${msg}`;
+            document.getElementById('log-container').prepend(entry);
+        }
+
+        function selectService(name) {
+            document.querySelectorAll('.service-card').forEach(c => c.classList.remove('card-active'));
+            document.getElementById('btn-' + name).classList.add('card-active');
+            const btn = document.getElementById('launch-btn');
+            btn.disabled = false;
+            btn.className = "w-full py-5 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all";
+            addLog(`Payload: ${name} locked.`);
+        }
+
+        function initiateTakeoff() {
+            isFlying = true;
+            document.getElementById('launch-btn').disabled = true;
+            document.getElementById('launch-btn').innerText = "AIRBORNE";
+            document.getElementById('launch-btn').style.background = "#10b981";
+            
+            const start = [6.9271, 79.8612];
+            const end = [6.9350, 79.8550];
+            const droneIcon = L.divIcon({ html: `<div class="drone-pulse"></div>`, iconSize: [20, 20], className: '' });
+            droneMarker = L.marker(start, { icon: droneIcon }).addTo(map);
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress++;
+                const lat = start[0] + (end[0] - start[0]) * (progress / 100);
+                const lng = start[1] + (end[1] - start[1]) * (progress / 100);
+                droneMarker.setLatLng([lat, lng]);
+                document.getElementById('hud-alt').innerText = (progress < 20 ? progress * 5 : 100) + "m";
+                document.getElementById('hud-spd').innerText = Math.floor(Math.random() * 10 + 40) + "km/h";
+                if(progress === 10) addLog("Takeoff complete. Navigating...");
+                if(progress === 100) {
+                    clearInterval(interval);
+                    addLog("Target Reached. Delivery complete.");
+                    alert("Mission Successful!");
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>

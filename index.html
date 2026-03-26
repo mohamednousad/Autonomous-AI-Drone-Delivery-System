@@ -3,272 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyDrop  | Autonomous AI Drone Delivery System</title>
+    <title>SkyDrop | Intelligence Network</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .neon-text { text-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
-        .neon-border { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
-        #map { height: 100%; width: 100%; border-radius: 1.5rem; z-index: 1; }
-        .leaflet-container { background: #1e293b !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030712; color: #f8fafc; overflow-x: hidden; }
+        .hero-gradient { background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent); }
+        .network-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.2) 1px, transparent 1px); background-size: 40px 40px; }
+        .pulse-node { width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; position: absolute; box-shadow: 0 0 15px #3b82f6; animation: node-pulse 2s infinite; }
+        @keyframes node-pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.5); opacity: 1; } }
+        .video-container { position: relative; width: 100%; height: 350px; border-radius: 2.5rem; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .video-placeholder { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6) contrast(1.2); }
+        .district-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.05); }
+        .district-card:hover { transform: translateY(-5px); background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); }
+        .floating-drone { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(2deg); } }
+        .scanline { width: 100%; height: 2px; background: rgba(59, 130, 246, 0.3); position: absolute; top: 0; left: 0; animation: scan 3s linear infinite; z-index: 5; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-100 overflow-x-hidden">
+<body class="hero-gradient network-grid min-h-screen">
 
-    <div id="loader" class="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="relative">
-            <div class="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-            <i class="fas fa-drone absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-blue-400 animate-pulse"></i>
-        </div>
-        <h2 class="mt-6 text-xl font-bold tracking-widest animate-pulse">Loading...</h2>
-    </div>
-
-    <nav class="fixed top-0 w-full z-50 glass px-6 py-4 flex justify-between items-center">
+    <nav class="p-6 flex justify-between items-center relative z-50">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 p-2 rounded-xl neon-border">
-                <i class="fas fa-box-rocket text-xl"></i>
+            <div class="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-500/20">
+                <i class="fas fa-microchip text-xl text-white"></i>
             </div>
-            <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">SkyDrop</span>
+            <span class="text-2xl font-800 tracking-tighter uppercase">SkyDrop <span class="text-blue-500">SkyDrop</span></span>
         </div>
-        <div class="hidden md:flex gap-8 font-medium">
-            <a href="#home" class="hover:text-blue-400 transition">Fleet</a>
-            <a href="#menu" class="hover:text-blue-400 transition">Services</a>
-            <a href="#track" class="hover:text-blue-400 transition">Live Tracking</a>
+        <div class="hidden md:flex gap-8 text-sm font-bold tracking-widest text-slate-400">
+            <a href="#" class="hover:text-white transition">NETWORK</a>
+            <a href="#" class="hover:text-white transition">FLEET</a>
+            <a href="#" class="hover:text-white transition">TECHNOLOGY</a>
         </div>
-        <div class="flex items-center gap-5">
-            <button onclick="toggleCart()" class="relative p-2 hover:text-blue-400 transition">
-                <i class="fas fa-shopping-cart text-xl"></i>
-                <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
-            </button>
-            <div id="gpsStatus" class="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 text-xs">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
-                GPS LOCKED
-            </div>
-        </div>
+        <button class="px-6 py-2 rounded-full border border-blue-500/30 text-xs font-bold hover:bg-blue-600 transition">CLIENT PORTAL</button>
     </nav>
 
-    <section id="home" class="relative pt-32 pb-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center min-h-screen">
-        <div class="space-y-8">
-            <div class="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full text-sm font-semibold border border-blue-500/20">
-                <i class="fas fa-microchip"></i> AI-DRIVEN AUTONOMY
+    <main class="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-5 space-y-8">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-extrabold uppercase tracking-[0.2em]">
+                Autonomous Logistics Network
             </div>
-            <h1 class="text-6xl md:text-8xl font-extrabold leading-tight">
-                Sky <span class="text-blue-500">Delivery</span><br>Reinvented.
-            </h1>
-            <p class="text-slate-400 text-xl max-w-lg leading-relaxed">
-                Experience the next generation of logistics. Our autonomous drones use real-time AI to navigate urban obstacles and deliver to your doorstep.
+            <h1 class="text-6xl font-800 tracking-tighter leading-[0.9]">Sri Lanka's <br> <span class="text-blue-500">Drone Neural Net.</span></h1>
+            <p class="text-slate-400 text-lg leading-relaxed">
+                Experience the world's most dense autonomous delivery infrastructure. With <span class="text-white font-bold">250 Active Units</span> distributed across all 25 districts.
             </p>
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('menu').scrollIntoView()" class="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-bold text-lg transition transform hover:-translate-y-1 shadow-lg shadow-blue-600/20">
-                    Get Started
+            
+            <div class="flex gap-6">
+                <div class="flex-1 bg-white/5 p-4 rounded-3xl border border-white/10">
+                    <p class="text-3xl font-800 text-white">25</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Districts Covered</p>
+                </div>
+                <div class="flex-1 bg-white/5 p-4 rounded-3xl border border-white/10">
+                    <p class="text-3xl font-800 text-white">10</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-500">Drones Per Hub</p>
+                </div>
+            </div>
+
+            <button onclick="detectGPS()" class="group relative flex items-center justify-between w-full p-6 bg-blue-600 rounded-[2rem] overflow-hidden transition-all hover:bg-blue-500">
+                <div class="relative z-10 flex flex-col items-start">
+                    <span class="text-xs font-bold uppercase tracking-widest opacity-80">Initialization</span>
+                    <span class="text-xl font-800">Auto-Detect Current District</span>
+                </div>
+                <i class="fas fa-location-crosshairs text-3xl opacity-50 group-hover:scale-110 transition"></i>
+            </button>
+        </div>
+
+        <div class="lg:col-span-7">
+            <div class="video-container shadow-2xl shadow-blue-500/10">
+                <div class="scanline"></div>
+                <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&q=80&w=1200" class="video-placeholder" alt="Drone Fleet View">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+                <div class="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+                    <div>
+                        <h3 class="text-2xl font-bold">SkyDrop Fleet v4.2</h3>
+                        <p class="text-sm text-slate-300">Synchronized High-Speed Delivery Network</p>
+                    </div>
+                    <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition shadow-xl">
+                        <i class="fas fa-play text-white ml-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="network-map" class="max-w-7xl mx-auto px-6 py-20">
+        <div class="flex justify-between items-end mb-12">
+            <div>
+                <h2 class="text-3xl font-800 mb-2">Network Topology</h2>
+                <p class="text-slate-500">Select your district to view live drone availability.</p>
+            </div>
+            <div class="text-right">
+                <span class="text-4xl font-800 text-blue-500" id="total-drones">250</span>
+                <span class="block text-[10px] font-bold text-slate-500 uppercase">Global Fleet Count</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div onclick="selectDistrict('Colombo')" class="district-card bg-white/5 p-6 rounded-[2rem] cursor-pointer">
+                <div class="flex justify-between items-start mb-4">
+                    <i class="fas fa-city text-blue-500"></i>
+                    <span class="text-[10px] font-bold text-green-500">ONLINE</span>
+                </div>
+                <p class="font-bold text-lg mb-1">Colombo</p>
+                <p class="text-[10px] text-slate-400">Hub ID: HUB-COL-01</p>
+                <div class="mt-4 flex -space-x-2">
+                    <img src="https://pngimg.com/d/drone_PNG204.png" class="w-6 h-6 object-contain grayscale brightness-200">
+                    <img src="https://pngimg.com/d/drone_PNG204.png" class="w-6 h-6 object-contain grayscale brightness-200">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[8px] font-bold">+8</div>
+                </div>
+            </div>
+
+            <div onclick="selectDistrict('Kandy')" class="district-card bg-white/5 p-6 rounded-[2rem] cursor-pointer">
+                <div class="flex justify-between items-start mb-4">
+                    <i class="fas fa-mountain text-blue-500"></i>
+                    <span class="text-[10px] font-bold text-green-500">ONLINE</span>
+                </div>
+                <p class="font-bold text-lg mb-1">Kandy</p>
+                <p class="text-[10px] text-slate-400">Hub ID: HUB-KAN-02</p>
+                <div class="mt-4 flex -space-x-2">
+                    <img src="https://pngimg.com/d/drone_PNG204.png" class="w-6 h-6 object-contain grayscale brightness-200">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[8px] font-bold">+9</div>
+                </div>
+            </div>
+            </div>
+    </section>
+
+    <div id="fleet-overlay" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl hidden p-6 overflow-y-auto">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h2 class="text-3xl font-800" id="selected-dist-name">Colombo Fleet</h2>
+                    <p class="text-slate-400">Select a drone unit to begin mission</p>
+                </div>
+                <button onclick="closeFleet()" class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <i class="fas fa-times"></i>
                 </button>
-                <button class="glass px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/10 transition">
-                    View Fleet
-                </button>
             </div>
-        </div>
-        <div class="relative">
-            <div class="absolute -inset-10 bg-blue-500/20 blur-[100px] rounded-full"></div>
-            <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&q=80&w=800" class="rounded-[3rem] shadow-2xl relative z-10 border border-white/10 rotate-2" alt="Drone">
-        </div>
-    </section>
-
-    <section id="menu" class="py-24 px-6 max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold mb-4">Request a Delivery</h2>
-            <p class="text-slate-400">Select a category to deploy a drone from the nearest hub</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-8">
-            <div onclick="selectCategory('Food', 'burger', 'orange')" class="glass p-8 rounded-[2.5rem] hover:bg-white/10 transition cursor-pointer group text-center border-b-4 border-orange-500">
-                <div class="w-20 h-20 bg-orange-500/20 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">
-                    <i class="fas fa-burger text-3xl"></i>
+            <div id="drone-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 </div>
-                <h3 class="text-2xl font-bold mb-2">Fast Food</h3>
-                <p class="text-slate-400 text-sm mb-6">Hot meals delivered in <span class="text-white font-bold">12 mins</span></p>
-                <button class="w-full py-3 rounded-xl bg-orange-500/20 text-orange-500 font-bold group-hover:bg-orange-500 group-hover:text-white transition">Select</button>
-            </div>
-            <div onclick="selectCategory('Medical', 'kit-medical', 'blue')" class="glass p-8 rounded-[2.5rem] hover:bg-white/10 transition cursor-pointer group text-center border-b-4 border-blue-500">
-                <div class="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">
-                    <i class="fas fa-kit-medical text-3xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold mb-2">Medical</h3>
-                <p class="text-slate-400 text-sm mb-6">Life-saving supplies in <span class="text-white font-bold">8 mins</span></p>
-                <button class="w-full py-3 rounded-xl bg-blue-500/20 text-blue-500 font-bold group-hover:bg-blue-500 group-hover:text-white transition">Select</button>
-            </div>
-            <div onclick="selectCategory('Essentials', 'bag-shopping', 'emerald')" class="glass p-8 rounded-[2.5rem] hover:bg-white/10 transition cursor-pointer group text-center border-b-4 border-emerald-500">
-                <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition">
-                    <i class="fas fa-bag-shopping text-3xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold mb-2">Essentials</h3>
-                <p class="text-slate-400 text-sm mb-6">Groceries & more in <span class="text-white font-bold">15 mins</span></p>
-                <button class="w-full py-3 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold group-hover:bg-emerald-500 group-hover:text-white transition">Select</button>
-            </div>
         </div>
-    </section>
-
-    <section id="track" class="py-24 px-6 max-w-7xl mx-auto mb-20">
-        <div class="grid lg:grid-cols-3 gap-8 h-[600px]">
-            <div class="lg:col-span-2 relative glass rounded-[2.5rem] overflow-hidden p-2">
-                <div id="map"></div>
-                <div class="absolute bottom-8 left-8 right-8 z-[10] flex gap-4">
-                    <div class="flex-1 glass p-4 rounded-2xl shadow-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Altitude</p>
-                        <p id="altVal" class="text-xl font-bold">0m</p>
-                    </div>
-                    <div class="flex-1 glass p-4 rounded-2xl shadow-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">Speed</p>
-                        <p id="spdVal" class="text-xl font-bold">0 km/h</p>
-                    </div>
-                    <div class="flex-1 glass p-4 rounded-2xl shadow-2xl border-l-4 border-blue-500">
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">AI Status</p>
-                        <p id="aiStatus" class="text-xl font-bold">STANDBY</p>
-                    </div>
-                </div>
-            </div>
-            <div class="space-y-6">
-                <div class="glass p-8 rounded-[2.5rem] h-full flex flex-col">
-                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
-                        <i class="fas fa-satellite text-blue-500"></i> Mission Control
-                    </h3>
-                    <div id="orderLog" class="flex-1 space-y-6 overflow-y-auto pr-2">
-                        <div class="text-center text-slate-500 mt-10">
-                            <i class="fas fa-box-open text-4xl mb-4 block"></i>
-                            <p>No active missions.</p>
-                            <p class="text-xs">Place an order to start AI tracking.</p>
-                        </div>
-                    </div>
-                    <button onclick="startMission()" id="missionBtn" class="hidden w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl font-bold mt-6 shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition">
-                        Confirm Order
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="py-10 border-t border-white/10 text-center text-slate-500 text-sm">
-        <p>© 2026 SkyDrop Autonomous Systems. Simulation Mode Active.</p>
-    </footer>
+    </div>
 
     <script>
-        let cart = [];
-        let map, droneMarker, pathLine;
-        let missionStarted = false;
-
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-            }, 1500);
-
-            map = L.map('map', { zoomControl: false }).setView([40.7128, -74.0060], 15);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        const droneData = {
+            'Colombo': ['SKYD-COL-01', 'SKYD-COL-02', 'SKYD-COL-03'],
+            'Kandy': ['SKYD-KAN-01', 'SKYD-KAN-02'],
+            'Galle': ['SKYD-GAL-01']
         };
 
-        function selectCategory(name, icon, color) {
-            cart = [{ name, icon, color }];
-            document.getElementById('cartCount').innerText = "1";
-            document.getElementById('missionBtn').classList.remove('hidden');
+        function selectDistrict(name) {
+            const grid = document.getElementById('drone-grid');
+            grid.innerHTML = '';
+            document.getElementById('selected-dist-name').innerText = name + ' Fleet';
             
-            const log = document.getElementById('orderLog');
-            log.innerHTML = `
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10 border-l-4 border-${color}-500">
-                    <div class="flex items-center gap-4">
-                        <i class="fas fa-${icon} text-2xl text-${color}-500"></i>
-                        <div>
-                            <p class="font-bold">${name} Package</p>
-                            <p class="text-xs text-slate-400">Ready for pickup at Hub Alpha</p>
+            const ids = droneData[name] || ['SKYD-GEN-01', 'SKYD-GEN-02'];
+            
+            ids.forEach(id => {
+                grid.innerHTML += `
+                    <div onclick="requestDelivery('${id}')" class="group bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:border-blue-500 transition cursor-pointer relative overflow-hidden">
+                        <div class="scanline"></div>
+                        <div class="flex justify-between mb-6">
+                            <span class="text-[10px] font-bold bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full tracking-widest uppercase">${id}</span>
+                            <i class="fas fa-signal text-green-500 text-xs"></i>
                         </div>
-                    </div>
-                </div>
-                <div class="flex gap-4 items-center px-2">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                    <p class="text-xs text-blue-400 font-mono tracking-tighter">Awaiting GPS Handshake...</p>
-                </div>
-            `;
-            document.getElementById('track').scrollIntoView();
-        }
-
-        function startMission() {
-            if(missionStarted) return;
-            missionStarted = true;
-            
-            document.getElementById('missionBtn').innerHTML = '<i class="fas fa-spinner animate-spin"></i> Process...';
-            
-            const startPoint = [40.7128, -74.0060];
-            const endPoint = [40.7200, -73.9950];
-            
-            if (droneMarker) map.removeLayer(droneMarker);
-            if (pathLine) map.removeLayer(pathLine);
-
-            const droneIcon = L.divIcon({
-                html: `<div class="bg-blue-600 p-2 rounded-lg shadow-2xl border-2 border-white text-white flex items-center justify-center">
-                        <i class="fas fa-helicopter-symbol animate-bounce"></i>
-                       </div>`,
-                className: '',
-                iconSize: [30, 30]
+                        <img src="https://pngimg.com/d/drone_PNG204.png" class="w-48 h-32 object-contain mx-auto mb-4 floating-drone group-hover:scale-110 transition duration-500">
+                        <div class="flex justify-between items-end">
+                            <div><p class="text-xs text-slate-500 font-bold uppercase">Battery</p><p class="text-xl font-800">${Math.floor(Math.random() * 20) + 80}%</p></div>
+                            <button class="bg-white text-slate-950 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest group-hover:bg-blue-600 group-hover:text-white transition">Select</button>
+                        </div>
+                    </div>`;
             });
 
-            droneMarker = L.marker(startPoint, { icon: droneIcon }).addTo(map);
-            pathLine = L.polyline([startPoint, endPoint], { color: '#3b82f6', dashArray: '10, 10', weight: 3 }).addTo(map);
-            
-            map.flyTo(startPoint, 15);
-
-            let progress = 0;
-            const steps = 100;
-            
-            const interval = setInterval(() => {
-                progress++;
-                const lat = startPoint[0] + (endPoint[0] - startPoint[0]) * (progress / steps);
-                const lng = startPoint[1] + (endPoint[1] - startPoint[1]) * (progress / steps);
-                
-                droneMarker.setLatLng([lat, lng]);
-                
-                document.getElementById('altVal').innerText = Math.floor(Math.random() * 20 + 100) + 'm';
-                document.getElementById('spdVal').innerText = Math.floor(Math.random() * 5 + 45) + ' km/h';
-                document.getElementById('aiStatus').innerText = 'FLYING';
-                document.getElementById('aiStatus').className = 'text-xl font-bold text-blue-400';
-
-                if(progress === 1) {
-                    addLog('Drone Airborne', 'fa-wind', 'blue');
-                }
-
-                if (progress >= steps) {
-                    clearInterval(interval);
-                    document.getElementById('aiStatus').innerText = 'DELIVERED';
-                    document.getElementById('aiStatus').className = 'text-xl font-bold text-emerald-400';
-                    document.getElementById('missionBtn').innerText = 'MISSION COMPLETE';
-                    document.getElementById('missionBtn').className = 'w-full py-4 bg-emerald-600 rounded-2xl font-bold mt-6';
-                    addLog('Package Dropped', 'fa-check-circle', 'emerald');
-                }
-            }, 100);
+            document.getElementById('fleet-overlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
-        function addLog(msg, icon, color) {
-            const log = document.getElementById('orderLog');
-            const entry = document.createElement('div');
-            entry.className = `flex gap-4 items-center animate-fade-in`;
-            entry.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-${color}-500/20 flex items-center justify-center text-${color}-500 text-xs">
-                    <i class="fas ${icon}"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-bold">${msg}</p>
-                    <p class="text-[10px] text-slate-500">Just now</p>
-                </div>
-            `;
-            log.prepend(entry);
+        function closeFleet() {
+            document.getElementById('fleet-overlay').classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
 
-        function toggleCart() {
-            alert("Cart items: " + (cart.length > 0 ? cart[0].name : "Empty"));
+        function requestDelivery(droneId) {
+            window.location.href = `launch-drone.html?id=${droneId}`;
+        }
+
+        function detectGPS() {
+            const btn = document.querySelector('button[onclick="detectGPS()"]');
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin text-2xl"></i>';
+            setTimeout(() => { selectDistrict('Colombo'); }, 1000);
         }
     </script>
 </body>
